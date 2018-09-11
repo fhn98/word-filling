@@ -48,7 +48,7 @@ class model (object):
     #basic cell followed by dropout. used for making the rnn
         def basic_cell():
             cell = tf.contrib.rnn.LSTMCell(self.hidden_len , forget_bias=1.0)
-            cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=0.5)
+            cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=0.8)
             return cell
     
     #making forward and backward layers used in rnn
@@ -60,8 +60,8 @@ class model (object):
         output , _ = tf.nn.bidirectional_dynamic_rnn(forward_cell , backward_cell , inputs=embedded_weights , dtype=tf.float32)
         
     #getting hidden state of previous forward cell and following backward cell of our target index   
-        fw_out = output[0][:,(self.num_steps//2-1),:]
-        bw_out = output[1][:,(self.num_steps//2+1),:]
+        fw_out = output[0][:,(self.num_steps//2),:]
+        bw_out = output[1][:,(self.num_steps//2),:]
         
     #concatenating hidden states followed by a fully connected layer to compute score of each word as a candidate of blank   
         final_out = tf.concat([fw_out , bw_out] , axis=1)
