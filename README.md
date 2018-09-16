@@ -1,6 +1,6 @@
 # word-filling
 
-**in this implementation, we concider an embedding to represent blank and we learn this embedding during the training**
+**in this implementation, we consider an embedding to represent blank and we learn this embedding during the training**
 
 convert_words_to_index: in this file we convert our text file into a list of corresponding indices of words
 
