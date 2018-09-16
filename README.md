@@ -13,3 +13,5 @@ word_filling_attempt1: implementing our word filling model
 word_filling_batch_generator1 :making training batches for 'train&test_word_filling1'
 
 further information are commented in each file :)
+
+## Read "General Tips.txt"
