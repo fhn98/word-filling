@@ -7,7 +7,6 @@
 import tensorflow as tf
 import numpy as np
 import pickle
-import import_ipynb
 
 import word_filling_batch_generator1
 from word_filling_batch_generator1 import get_batch
