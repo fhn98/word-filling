@@ -7,6 +7,8 @@
 import tensorflow as tf
 import numpy as np
 import pickle
+from urllib import request
+from nltk import word_tokenize
 
 
 # In[2]:
@@ -43,26 +45,18 @@ def convert (book , stoi , itos , vectors):
 # In[4]:
 
 
-def make_corpus(book_id , stoifile , itosfile , vectorsfile):
-    book = gutenberg.words(book_id)
+def make_corpus(corpus , stoi , itos , vectors):     
+    """
+    description: converting words to their indices in GloVe and adding new words to Glove if they do not exist in stoi.
     
-    with open (stoifile , 'rb') as pkl:#stoi : a dictionary from word to its index in vectors
-        stoi = pickle.load(pkl)
-
-    with open (itosfile , 'rb') as pkl:#index of each word in the list represents its index in vectors
-        itos = pickle.load(pkl)
-
-    with open (vectorsfile , 'rb') as pkl:#each row is the word embedding of the word with corresponding index
-        vectors = pickle.load(pkl)
-        
+    inputs: stoi : a dictionary from word to its index in vectors
+            itos: index of each word in the list represents its index in vectors
+            vectors: each row is the word embedding of the word with corresponding index
+            
+    outputs: nth.
+    """
+    book_by_index , stoi , itos , vectors = convert(corpus , stoi , itos , vectors)
     
-
-    book_by_index , stoi , itos , vectors = convert(book , stoi , itos , vectors)
-    
-
-    print(len(book_by_index))
-    print(book_by_index)
-
     #writing back data
     with open (stoifile,'wb') as pkl:
         pickle.dump(stoi , pkl)      
@@ -73,13 +67,38 @@ def make_corpus(book_id , stoifile , itosfile , vectorsfile):
     with open (vectorsfile,'wb') as pkl:
         pickle.dump(vectors , pkl)
 
-    with open ('test_by_index.pkl','wb') as pkl:
-        pickle.dump(book_by_index[:5000] , pkl)      
+    with open ('train_by_index.pkl','wb') as pkl:
+        pickle.dump(book_by_index , pkl)      
+
+
+# In[ ]:
+
+
+def download_books(urls):
+    books=[]
+    
+    for book_url in urls:
+        response = request.urlopen(book_url)
+        raw = response.read().decode('utf8')
+        books=books+list(word_tokenize(raw))
+    
+    return books
+    
 
 
 # In[5]:
 
 
 if __name__=='__main__':
-    make_corpus('shakespeare-macbeth.txt' , 'stoi.pkl' , 'itos.pkl' , 'vectors.pkl')
+    books = download_books(['http://www.gutenberg.org/cache/epub/1514/pg1514.txt'] )
+    with open (stoifile , 'rb') as pkl:
+        stoi = pickle.load(pkl)
+
+    with open (itosfile , 'rb') as pkl:
+        itos = pickle.load(pkl)
+
+    with open (vectorsfile , 'rb') as pkl:
+        vectors = pickle.load(pkl)
+        
+    make_corpus(books , stoi, itos , vectors)
 
