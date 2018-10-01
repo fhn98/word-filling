@@ -11,21 +11,8 @@ import numpy as np
 # In[3]:
 
 
-
-# coding: utf-8
-
-# In[1]:
-
-
-import tensorflow as tf
-import numpy as np
-
-
-# In[3]:
-
-
 class model (object):
-    def __init__ (self , batch_size  , hidden_len , num_steps , num_layers , vocab_size , embd_len , train_mode , keep_prob , num_samples):
+    def __init__ (self , batch_size  , hidden_len , num_steps , num_layers , vocab_size , embd_len , train_mode , keep_prob):
         """
         description: initializing class fields and then calling construct_model for constructing the model_graph
 
@@ -41,7 +28,6 @@ class model (object):
         self.embd_len = embd_len
         self.train_mode=train_mode
         self.keep_prob=keep_prob
-        self.num_samples=num_samples
         
         self.construct_model()
         
@@ -79,36 +65,21 @@ class model (object):
             return cell
     
     #making forward and backward layers used in rnn
-        forward_cell = tf.contrib.rnn.MultiRNNCell([basic_cell() for _ in range (self.num_layers)])
-        backward_cell = tf.contrib.rnn.MultiRNNCell([basic_cell() for _ in range (self.num_layers)])
+        forward_cell = [basic_cell() for _ in range (self.num_layers)]
+        backward_cell = [basic_cell() for _ in range (self.num_layers)]
             
             
     #making bidirectional rnn        
-        output , _ = tf.nn.bidirectional_dynamic_rnn(forward_cell , backward_cell , inputs=embedded_weights , dtype=tf.float32)
+        outputs , _  , _ = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(cells_fw=forward_cell ,cells_bw= backward_cell , inputs=embedded_weights , dtype=tf.float32)
         
-    #getting hidden state of previous forward cell and following backward cell of our target index   
-        fw_out = output[0][:,(self.num_steps//2),:]
-        bw_out = output[1][:,(self.num_steps//2),:]
+    #getting hidden state of the target index  
+      
+        final_out = outputs[:,(self.num_steps//2),:]
         
-    #concatenating hidden states followed by a fully connected layer to compute score of each word as a candidate of blank   
-        final_out = tf.concat([fw_out , bw_out] , axis=1)
-        
-    #computing nce loss 
-        nce_biases = tf.Variable(tf.random_uniform([self.vocab_size] , -1.0 , 1.0))
-        nce_weights = tf.Variable(tf.random_uniform([self.vocab_size,2*self.hidden_len] , -1.0 , 1.0))
-        loss = tf.nn.nce_loss(biases=nce_biases, weights=nce_weights , inputs=final_out , labels=self.targets , num_sampled=self.num_samples , num_classes=self.vocab_size)
+        logits = tf.layers.dense(final_out , self.vocab_size)
+        self.answers = tf.argmax(logits , axis=1) 
         
     #multiplying loss and ratio   
-        loss = tf.multiply(loss , self.loss_ratio)
-        self.batch_loss = tf.reduce_mean(loss)
+        loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits , labels=tf.one_hot(indices=self.targets,depth=self.vocab_size , axis=-1))
         
-        if (self.train_mode==False):
-            self.answers = tf.argmax(tf.matmul(final_out , tf.transpose(nce_weights)) , axis=1) 
-
-
-# In[4]:
-
-
-if __name__=='__main__':
-    model(100,100,50,3,400000,50)
-
+        self.batch_loss = tf.reduce_mean(loss)
